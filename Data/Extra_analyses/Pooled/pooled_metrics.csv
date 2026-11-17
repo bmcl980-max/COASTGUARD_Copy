@@ -1,0 +1,13 @@
+satellite,scenario,images,images_by_site,transects,coverage_pct,median_m,MedAE_m,RMSE_m,p90_abs_m,pixel_m,within_pixel_pct
+S2,default_WP,14,Muriwai 6 + Pakiri 8,4291,98.1,2.9,6.4,28.3,43.9,10,66.5
+S2,default_local,14,Muriwai 6 + Pakiri 8,4336,99.1,-16.5,16.8,33.2,53.4,10,24.8
+S2,NZ_WP,14,Muriwai 6 + Pakiri 8,4373,100.0,3.9,5.1,9.8,16.2,10,81.7
+S2,NZ_local,14,Muriwai 6 + Pakiri 8,4374,100.0,-5.2,5.4,16.0,20.2,10,69.4
+S2,NZsparse_WP,14,Muriwai 6 + Pakiri 8,4373,100.0,3.9,5.1,9.8,16.2,10,81.9
+S2,NZsparse_local,14,Muriwai 6 + Pakiri 8,4372,99.9,7.5,7.6,9.3,13.1,10,68.3
+L8,default_WP,13,Muriwai 8 + Pakiri 5,3887,87.4,-22.6,25.5,47.1,84.6,15,32.8
+L8,default_local,13,Muriwai 8 + Pakiri 5,4128,92.9,-26.5,26.9,42.3,71.1,15,23.0
+L8,NZ_WP,13,Muriwai 8 + Pakiri 5,4431,99.7,21.5,21.7,33.0,53.8,15,34.6
+L8,NZ_local,13,Muriwai 8 + Pakiri 5,4443,100.0,2.4,9.0,14.4,19.9,15,76.5
+L8,NZsparse_WP,13,Muriwai 8 + Pakiri 5,4430,99.7,21.5,21.6,33.9,55.7,15,34.7
+L8,NZsparse_local,13,Muriwai 8 + Pakiri 5,4438,99.8,19.1,19.2,24.2,35.5,15,38.2

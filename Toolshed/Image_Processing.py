@@ -40,6 +40,64 @@ from Toolshed import Toolbox
 np.seterr(all='ignore') # raise/ignore divisions by 0 and nans
 
 # Main function to preprocess a satellite image
+def GetGridPixels(img, bands, georef, settings, scale):
+    """
+    Fetch bands of a GEE image as a numpy array on the run's fixed pixel grid
+    (origin from Toolbox.CalcGeoref). Replaces geemap.ee_to_numpy, which returned
+    pixels in each image's own projection and extent, so that the georef was not
+    exact (see Toolbox.CalcGeoref). Images from other tiles or UTM zones are
+    reprojected onto the same grid; images on the run's grid are returned unchanged.
+    Masked pixels are returned as 0, as before.
+    BM Oct 2026
+
+    Parameters
+    ----------
+    img : ee.Image
+        Image to fetch.
+    bands : list
+        Band names to fetch, in order.
+    georef : list
+        Grid georef [Xtrans, Xscale, Xshear, Ytrans, Yshear, Yscale].
+    settings : dict
+        Dictionary of user-defined settings used for the veg edge/waterline extraction.
+    scale : int
+        Pixel size (m) to fetch the bands at.
+
+    Returns
+    -------
+    im : np.array
+        Array of shape (rows, cols, bands).
+
+    """
+    from numpy.lib import recfunctions as rfn
+    block = Toolbox.GridBlock(georef[1])
+    x0, y0 = georef[0], georef[3]
+    xmin, ymin, xmax, ymax = Toolbox.AOIBoundsUTM(settings)
+    width = np.ceil((xmax - x0) / block) * block
+    height = np.ceil((y0 - ymin) / block) * block
+    # Continuous bands are resampled bilinearly, so values are interpolated to the grid's
+    # pixel centres when an image's native grid is offset from it (e.g. Landsat 30 m bands
+    # vs the 15 m panchromatic grid, or images from another tile/zone). Bilinear returns
+    # native values unchanged where grids coincide. QA/mask bands keep nearest neighbour.
+    image = ee.Image(img)
+    flags = [b for b in bands if b.startswith(('QA', 'MSK'))]
+    cont = [b for b in bands if b not in flags]
+    parts = ([image.select(cont).resample('bilinear')] if cont else []) + ([image.select(flags)] if flags else [])
+    image = ee.Image.cat(parts).select(bands).unmask(0, False)
+    request = {
+        'expression': image,
+        'fileFormat': 'NUMPY_NDARRAY',
+        'grid': {
+            'dimensions': {'width': int(round(width / scale)), 'height': int(round(height / scale))},
+            'affineTransform': {'scaleX': scale, 'shearX': 0, 'translateX': x0,
+                                'shearY': 0, 'scaleY': -scale, 'translateY': y0},
+            'crsCode': 'EPSG:' + str(settings['projection_epsg']),
+        },
+    }
+    arr = ee.data.computePixels(request)
+    return rfn.structured_to_unstructured(arr[list(bands)], dtype=float)
+
+
 def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, settings, polygon, dates, skipped):
     """
     Main function to preprocess a satellite image
@@ -116,10 +174,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
             skipped['cloudy'].append([filenames[fn], satname, acqdate+' '+acqtime])
             return None, None, None, None, None, None, acqtime
         
-        im_ms = geemap.ee_to_numpy(img, 
-                                   bands = ['B1','B2','B3','B4','B5','QA_PIXEL'], 
-                                   region=ee.Geometry.Polygon(polygon),
-                                   scale=30)
+        im_ms = GetGridPixels(img, ['B1','B2','B3','B4','B5','QA_PIXEL'], georef, settings, 30)
         
         # Run initial QA on image
         im_ms = QAMask(im_ms, satname, settings['cloud_thresh'])
@@ -186,10 +241,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
             skipped['cloudy'].append([filenames[fn], satname, acqdate+' '+acqtime])
             return None, None, None, None, None, None, acqtime
         
-        im_ms = geemap.ee_to_numpy(img, 
-                                   bands = ['B1','B2','B3','B4','B5', 'B8','QA_PIXEL'], 
-                                   region=ee.Geometry.Polygon(polygon),
-                                   scale=30)
+        im_ms = GetGridPixels(img, ['B1','B2','B3','B4','B5', 'B8','QA_PIXEL'], georef, settings, 30)
         
         # Run initial QA on image
         im_ms = QAMask(im_ms, satname, settings['cloud_thresh'])
@@ -208,10 +260,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
         #Apply the mask to the image and display the result.
         masked = img.updateMask(mask);
         
-        im_pan = geemap.ee_to_numpy(img, 
-                                    bands = ['B8'], 
-                                    region=ee.Geometry.Polygon(polygon),
-                                    scale=15)
+        im_pan = GetGridPixels(img, ['B8'], georef, settings, 15)
         
         # size of pan image
         nrows = im_pan.shape[0]
@@ -280,10 +329,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
             skipped['cloudy'].append([filenames[fn], satname, acqdate+' '+acqtime])
             return None, None, None, None, None, None, acqtime
         
-        im_ms = geemap.ee_to_numpy(img, 
-                                   bands = ['B2','B3','B4','B5', 'B6','B7','B10','B11','QA_PIXEL'], 
-                                   region=ee.Geometry.Polygon(polygon),
-                                   scale=30)
+        im_ms = GetGridPixels(img, ['B2','B3','B4','B5', 'B6','B7','B10','B11','QA_PIXEL'], georef, settings, 30)
         
         # Run initial QA on image
         im_ms = QAMask(im_ms, satname, settings['cloud_thresh'])
@@ -298,10 +344,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
         #Create a mask from the cloud score and combine it with the image mask.
         mask = cloud_scored.select(['cloud']).lte(20);
         
-        im_pan = geemap.ee_to_numpy(img, 
-                                    bands = ['B8'], 
-                                    region=ee.Geometry.Polygon(polygon),
-                                    scale=15)
+        im_pan = GetGridPixels(img, ['B8'], georef, settings, 15)
         
         # size of pan image
         nrows = im_pan.shape[0]
@@ -370,10 +413,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
             skipped['cloudy'].append([filenames[fn], satname, acqdate+' '+acqtime])
             return None, None, None, None, None, None, acqtime
         
-        im_ms = geemap.ee_to_numpy(img, 
-                                   bands = ['B2','B3','B4','B5', 'B6','B8','B10','B11','QA_PIXEL'], 
-                                   region=ee.Geometry.Polygon(polygon),
-                                   scale=30)
+        im_ms = GetGridPixels(img, ['B2','B3','B4','B5', 'B6','B8','B10','B11','QA_PIXEL'], georef, settings, 30)
         
         # Run initial QA on image
         im_ms = QAMask(im_ms, satname, settings['cloud_thresh'])
@@ -388,10 +428,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
         #Create a mask from the cloud score and combine it with the image mask.
         mask = cloud_scored.select(['cloud']).lte(20);
   
-        im_pan = geemap.ee_to_numpy(img, 
-                                    bands = ['B8'], 
-                                    region=ee.Geometry.Polygon(polygon),
-                                    scale=15)
+        im_pan = GetGridPixels(img, ['B8'], georef, settings, 15)
         
         # size of pan image
         nrows = im_pan.shape[0]
@@ -461,10 +498,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
             return None, None, None, None, None, None, acqtime
 
         # read 10m bands (R,G,B,NIR)        
-        im10 = geemap.ee_to_numpy(img, 
-                                  bands = ['B2','B3','B4','B8'], 
-                                  region=ee.Geometry.Polygon(polygon),
-                                  scale=10)
+        im10 = GetGridPixels(img, ['B2','B3','B4','B8'], georef, settings, 10)
         if im10 is None:
             print(' - Skipped: empty raster')
             skipped['empty_poor'].append([filenames[fn], satname, acqdate+' '+acqtime])
@@ -487,10 +521,7 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
         ncols = im10.shape[1]
 
         # read 20m band (SWIR1)
-        im20 = geemap.ee_to_numpy(img, 
-                                  bands = ['B11'], 
-                                  region=ee.Geometry.Polygon(polygon),
-                                  scale=20)
+        im20 = GetGridPixels(img, ['B11'], georef, settings, 20)
         
         if im20 is None:
             print(' - Skipped: empty raster')
@@ -511,15 +542,9 @@ def preprocess_single(ImgColl, georef, fn, datelist, filenames, satname, setting
         # create cloud mask using 60m QA band (not as good as Landsat cloud cover)
         # 2024 rename of QA bands to MSK_CLASSI; implemented additional option
         try:
-            im60 = geemap.ee_to_numpy(img, 
-                                      bands = ['QA60'], 
-                                      region=ee.Geometry.Polygon(polygon),
-                                      scale=60)
+            im60 = GetGridPixels(img, ['QA60'], georef, settings, 60)
         except:
-            im60 = geemap.ee_to_numpy(img, 
-                                      bands = ['MSK_CLASSI_OPAQUE'], 
-                                      region=ee.Geometry.Polygon(polygon),
-                                      scale=60)
+            im60 = GetGridPixels(img, ['MSK_CLASSI_OPAQUE'], georef, settings, 60)
         
         if im60 is None:
             print(' - Skipped: empty raster')

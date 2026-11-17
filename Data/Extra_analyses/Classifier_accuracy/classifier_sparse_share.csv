@@ -1,0 +1,19 @@
+model,site,platform,pixels,called_veg
+VedgeSat (default),Kawhia,L8,120,0.1667
+VedgeSat (default),Kawhia,S2,334,0.0
+VedgeSat (default),TeArai,L8,387,0.1499
+VedgeSat (default),TeArai,S2,333,0.0661
+VedgeSat (default),TeHenga,L8,384,0.0521
+VedgeSat (default),TeHenga,S2,333,0.027
+NZ,Kawhia,L8,120,0.6
+NZ,Kawhia,S2,334,0.0838
+NZ,TeArai,L8,387,0.0491
+NZ,TeArai,S2,333,0.0601
+NZ,TeHenga,L8,384,0.7578
+NZ,TeHenga,S2,333,0.5766
+NZsparse,Kawhia,L8,120,0.8167
+NZsparse,Kawhia,S2,334,0.5868
+NZsparse,TeArai,L8,387,0.0336
+NZsparse,TeArai,S2,333,0.0811
+NZsparse,TeHenga,L8,384,0.9818
+NZsparse,TeHenga,S2,333,1.0

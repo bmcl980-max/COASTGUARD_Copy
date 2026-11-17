@@ -61,7 +61,7 @@ import geopandas as gpd
 import csv
 import math
 
-ee.Initialize()
+ee.Initialize(project='civic-ripsaw-454707-c4')
 
 
 # SCALING:

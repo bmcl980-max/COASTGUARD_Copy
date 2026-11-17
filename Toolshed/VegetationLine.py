@@ -118,6 +118,7 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
         output_geoaccuracy = []     # georeferencing accuracy of the images
         output_idxkeep = []         # index that were kept during the analysis (cloudy images are skipped)
         output_t_ndvi = []          # NDVI threshold used to map the vegline
+        output_t_ndvi_wp = []       # Weighted Peaks (first-pass) NDVI threshold
         output_t_ndwi = []          # NDWI threshold used to map the vegline
         
         # get pixel sizes, image collections and georefs for each platform
@@ -223,6 +224,15 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
                 skipped['no_contours'].append([filenames[fn], satname, acqdate+' '+acqtime])
                 print(' - Poor image quality: no contours generated.')
                 continue
+            t_ndvi_wp = t_ndvi
+            # local threshold refinement around the first-pass edge (BM Oct 2026)
+            if settings.get('local_thresh', False):
+                contours_local, t_local = FindShoreContours_Local(im_ndvi, im_labels, cloud_mask, im_ref_buffer,
+                                                                  contours_ndvi, t_ndvi, georef, settings)
+                if contours_local is not None:
+                    contours_ndvi, t_ndvi = contours_local, t_local
+                else:
+                    print(' - Local threshold not possible; Weighted Peaks edge kept.')
             
             if settings['wetdry'] == True:
                 im_ndwi = Toolbox.nd_index(im_ms[:,:,3], im_ms[:,:,1], cloud_mask)
@@ -292,6 +302,7 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
             output_geoaccuracy.append(metadata[satname]['acc_georef'][fn])
             output_idxkeep.append(fn)
             output_t_ndvi.append(t_ndvi)
+            output_t_ndvi_wp.append(t_ndvi_wp)
 
 
         # Outside of per-image loop
@@ -305,6 +316,7 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
                 'cloud_cover': output_cloudcover,
                 'idx': output_idxkeep,
                 'vthreshold': output_t_ndvi,
+                'vthresh_wp': output_t_ndvi_wp,
                 'wthreshold': output_t_ndwi
                 }
     
@@ -317,6 +329,7 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
                 'cloud_cover': output_cloudcover,
                 'idx': output_idxkeep,
                 'vthreshold': output_t_ndvi,
+                'vthresh_wp': output_t_ndvi_wp,
                 'wthreshold': output_t_ndwi
                 }
         
@@ -329,6 +342,7 @@ def extract_veglines(metadata, settings, polygon, dates, savetifs=True):
                 'cloud_cover': output_cloudcover,
                 'idx': output_idxkeep,
                 'vthreshold': output_t_ndvi,
+                'vthresh_wp': output_t_ndvi_wp,
                 'wthreshold': output_t_ndwi
                 }
         
@@ -1126,6 +1140,76 @@ def FindShoreContours_WP(im_ndi, im_labels, cloud_mask, im_ref_buffer):
 
     # only return contours and threshold
     return contours_ndi, t_ndi
+
+
+def FindShoreContours_Local(im_ndi, im_labels, cloud_mask, im_ref_buffer, contours_first, t_first, georef, settings):
+    """
+    Local threshold refinement. Recomputes the NDVI threshold from classified
+    pixels in a strip either side of the current edge (first pass: the Weighted
+    Peaks edge), using the minimum-error threshold between the classes
+    (Toolbox.FindLocalThresh), then redraws the edge at that threshold across the
+    whole reference-line buffer, as FindShoreContours_WP does. If the strip holds
+    too few pixels of either class, it is widened (up to 3 times its width) so
+    that it reaches both sides of the boundary. Repeated, with the strip rebuilt
+    around the new edge, until the threshold changes by less than 0.005 (up to
+    settings['local_iter'] passes).
+    BM Oct 2026; Nov 2026: edge redrawn across the buffer, not only inside the
+    strip, so the edge is not lost where the first-pass edge lies more than a
+    strip width from the vegetation boundary.
+
+    Arguments:
+    -----------
+    im_ndi: np.array
+        NDVI image
+    im_labels: np.array
+        3D boolean image, [:,:,0] vegetation and [:,:,1] non-vegetation
+    cloud_mask: np.array
+        2D cloud mask with True where cloud pixels are
+    im_ref_buffer: np.array
+        binary image containing a buffer around the reference shoreline
+    contours_first: list of np.arrays
+        first-pass contours (pixel coordinates) from FindShoreContours_WP
+    t_first: float
+        first-pass (Weighted Peaks) threshold
+    georef: list
+        [Xtr, Xscale, Xshear, Ytr, Yshear, Yscale]
+    settings: dict
+        uses 'local_strip_m' (strip half-width, m; default 50), 'local_iter'
+        (maximum passes; default 3) and 'min_length_sl'
+    Returns:
+    -----------
+    contours_ndi: list of np.arrays or None
+        contours extracted across the buffer (None if refinement was not possible)
+    t_ndi: float or None
+        local threshold used to map the contours
+    """
+    pixel_size = abs(georef[1])
+    strip_m = settings.get('local_strip_m', 50)
+    im_ndi_buffer = np.copy(im_ndi)
+    im_ndi_buffer[~im_ref_buffer] = np.nan
+    contours, t_prev, t_ndi = contours_first, t_first, None
+    for _ in range(settings.get('local_iter', 3)):
+        t_new = None
+        for width in [strip_m, 2*strip_m, 3*strip_m]:
+            strip = Toolbox.LocalStrip(contours, im_ndi.shape, pixel_size, width, settings['min_length_sl'])
+            if strip is None:
+                break
+            strip = strip & im_ref_buffer & ~cloud_mask
+            t_new = Toolbox.FindLocalThresh(im_ndi[strip & im_labels[:,:,0]], im_ndi[strip & im_labels[:,:,1]], t_ref=t_prev)
+            if t_new is not None:
+                break
+        if t_new is None:
+            break
+        new_contours = process_contours(measure.find_contours(im_ndi_buffer, t_new))
+        if len(new_contours) == 0:
+            break
+        converged = t_ndi is not None and abs(t_new - t_ndi) < 0.005
+        contours, t_ndi, t_prev = new_contours, t_new, t_new
+        if converged:
+            break
+    if t_ndi is None:
+        return None, None
+    return contours, t_ndi
 
 
 def find_wl_contours1_old(im_ndvi, cloud_mask, im_ref_buffer, satname):

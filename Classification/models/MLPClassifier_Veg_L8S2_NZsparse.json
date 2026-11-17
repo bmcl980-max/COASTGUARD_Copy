@@ -1,0 +1,415 @@
+{
+  "model": "MLPClassifier_Veg_L8S2_NZsparse.pkl",
+  "created": "2026-10-06T13:47:12",
+  "include_sparse": true,
+  "hidden_layer_sizes": [
+    100,
+    50
+  ],
+  "seed": 0,
+  "target_per_class": 10000,
+  "shares": {
+    "dune_veg": 0.6,
+    "other_veg": 0.4,
+    "sparse_veg": 0.25,
+    "sand_dry": 0.5,
+    "sand_wet": 0.2,
+    "water": 0.15,
+    "built_cloud": 0.15
+  },
+  "platforms": [
+    "S2",
+    "L8"
+  ],
+  "sites": {
+    "TeHenga": {
+      "role": "train",
+      "bbox": [
+        174.43008,
+        174.47472,
+        -36.90844,
+        -36.86801
+      ],
+      "tile": "T60HTE",
+      "scenes": {
+        "S2": [
+          "2024-03-18",
+          "2024-09-04"
+        ],
+        "L8": [
+          "2024-03-15",
+          "2024-09-07"
+        ]
+      }
+    },
+    "Kawhia": {
+      "role": "train",
+      "bbox": [
+        174.76064,
+        174.80974,
+        -38.08386,
+        -38.03845
+      ],
+      "tile": null,
+      "scenes": {
+        "S2": [
+          "2024-02-27",
+          "2024-08-10"
+        ],
+        "L8": [
+          "2024-03-24",
+          "2024-07-30"
+        ]
+      }
+    },
+    "TeArai": {
+      "role": "train",
+      "bbox": [
+        174.62572,
+        174.66877,
+        -36.18858,
+        -36.13931
+      ],
+      "tile": null,
+      "scenes": {
+        "S2": [
+          "2024-03-18",
+          "2024-07-11"
+        ],
+        "L8": [
+          "2024-02-21",
+          "2024-06-28"
+        ]
+      }
+    },
+    "NorthNewBrighton": {
+      "role": "train",
+      "bbox": [
+        172.6948,
+        172.74621,
+        -43.50614,
+        -43.47008
+      ],
+      "tile": null,
+      "scenes": {
+        "S2": [
+          "2025-02-16",
+          "2025-09-09"
+        ],
+        "L8": [
+          "2025-02-23",
+          "2025-07-24"
+        ]
+      }
+    }
+  },
+  "pixels": [
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "built_cloud",
+      "n": 73
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "dune_veg",
+      "n": 542
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "other_veg",
+      "n": 351
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "sand_dry",
+      "n": 726
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "sand_wet",
+      "n": 54
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "sparse_veg",
+      "n": 120
+    },
+    {
+      "site": "Kawhia",
+      "platform": "L8",
+      "subclass": "water",
+      "n": 188
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "dune_veg",
+      "n": 600
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "other_veg",
+      "n": 400
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "sand_dry",
+      "n": 936
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "sand_wet",
+      "n": 160
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "sparse_veg",
+      "n": 334
+    },
+    {
+      "site": "Kawhia",
+      "platform": "S2",
+      "subclass": "water",
+      "n": 188
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "built_cloud",
+      "n": 172
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "dune_veg",
+      "n": 523
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "other_veg",
+      "n": 358
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "sand_dry",
+      "n": 46
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "sand_wet",
+      "n": 343
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "L8",
+      "subclass": "water",
+      "n": 188
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "built_cloud",
+      "n": 276
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "dune_veg",
+      "n": 600
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "other_veg",
+      "n": 400
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "sand_dry",
+      "n": 104
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "sand_wet",
+      "n": 348
+    },
+    {
+      "site": "NorthNewBrighton",
+      "platform": "S2",
+      "subclass": "water",
+      "n": 188
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "dune_veg",
+      "n": 530
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "other_veg",
+      "n": 353
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "sand_dry",
+      "n": 359
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "sand_wet",
+      "n": 254
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "sparse_veg",
+      "n": 387
+    },
+    {
+      "site": "TeArai",
+      "platform": "L8",
+      "subclass": "water",
+      "n": 187
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "dune_veg",
+      "n": 600
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "other_veg",
+      "n": 400
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "sand_dry",
+      "n": 929
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "sand_wet",
+      "n": 169
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "sparse_veg",
+      "n": 333
+    },
+    {
+      "site": "TeArai",
+      "platform": "S2",
+      "subclass": "water",
+      "n": 187
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "built_cloud",
+      "n": 226
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "dune_veg",
+      "n": 523
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "other_veg",
+      "n": 346
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "sand_dry",
+      "n": 1299
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "sand_wet",
+      "n": 115
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "sparse_veg",
+      "n": 384
+    },
+    {
+      "site": "TeHenga",
+      "platform": "L8",
+      "subclass": "water",
+      "n": 187
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "built_cloud",
+      "n": 70
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "dune_veg",
+      "n": 600
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "other_veg",
+      "n": 400
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "sand_dry",
+      "n": 935
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "sand_wet",
+      "n": 323
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "sparse_veg",
+      "n": 333
+    },
+    {
+      "site": "TeHenga",
+      "platform": "S2",
+      "subclass": "water",
+      "n": 187
+    }
+  ],
+  "sklearn": "1.7.2"
+}

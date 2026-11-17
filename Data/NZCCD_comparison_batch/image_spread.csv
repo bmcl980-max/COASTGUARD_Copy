@@ -1,0 +1,25 @@
+site,satname,run,images,MedAE_median,MedAE_min,MedAE_max,RMSE_median,RMSE_min,RMSE_max
+Muriwai,L8,Default (WP),8,45.4,20.8,69.9,62.2,24.0,78.0
+Muriwai,L8,Default (local),8,30.0,23.3,53.1,46.4,32.0,62.6
+Muriwai,L8,NZ (WP),8,26.6,19.2,64.1,28.1,20.6,66.6
+Muriwai,L8,NZ (local),8,9.4,7.6,15.3,14.6,10.7,20.2
+Muriwai,L8,NZsparse (WP),8,26.6,19.2,64.1,28.1,20.6,66.6
+Muriwai,L8,NZsparse (local),8,25.9,16.1,29.9,28.8,17.2,32.6
+Muriwai,S2,Default (WP),6,10.4,4.2,63.1,14.6,6.6,70.2
+Muriwai,S2,Default (local),6,20.4,16.1,23.8,37.2,37.0,42.4
+Muriwai,S2,NZ (WP),6,4.4,4.2,16.1,8.0,6.5,19.6
+Muriwai,S2,NZ (local),6,7.5,4.3,11.3,17.4,10.5,27.0
+Muriwai,S2,NZsparse (WP),6,4.4,4.2,16.1,8.0,6.5,19.6
+Muriwai,S2,NZsparse (local),6,4.6,4.0,9.2,8.2,6.7,10.9
+Pakiri,L8,Default (WP),5,7.9,2.4,19.1,8.1,4.9,32.8
+Pakiri,L8,Default (local),5,16.0,12.5,19.5,29.1,23.2,33.2
+Pakiri,L8,NZ (WP),5,4.2,2.4,8.4,8.0,4.9,9.3
+Pakiri,L8,NZ (local),5,6.8,5.3,8.2,12.5,11.9,16.0
+Pakiri,L8,NZsparse (WP),5,7.2,2.4,8.4,7.5,4.9,9.3
+Pakiri,L8,NZsparse (local),5,7.6,1.5,13.8,8.3,3.5,14.3
+Pakiri,S2,Default (WP),8,4.6,1.7,18.3,6.4,2.5,19.0
+Pakiri,S2,Default (local),8,14.4,8.3,19.4,25.2,17.6,31.5
+Pakiri,S2,NZ (WP),8,4.9,1.7,18.3,6.4,2.5,19.0
+Pakiri,S2,NZ (local),8,2.8,1.8,9.5,8.7,7.1,13.4
+Pakiri,S2,NZsparse (WP),8,4.9,1.7,18.3,6.4,2.5,19.0
+Pakiri,S2,NZsparse (local),8,10.0,1.8,13.5,10.4,2.6,13.6

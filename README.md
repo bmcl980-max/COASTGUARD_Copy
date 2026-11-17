@@ -1,3 +1,50 @@
+# VedgeSat for New Zealand soft coasts (Honours dissertation fork)
+
+This is a modified fork of **COASTGUARD / VedgeSat** (Muir et al., 2024; original repository: https://github.com/fmemuir/COASTGUARD), used for the University of Auckland Honours dissertation:
+
+> McLean, B. (2026). *Automated Coastal Change Monitoring: The Application of a Vegetation Edge Detection Toolkit to New Zealand Soft Coasts*. BSc (Hons) dissertation in Geography, Waipapa Taumata Rau – University of Auckland.
+
+All credit for the original toolkit belongs to its authors. Please cite Muir et al. (2024) and the original repository when using this code. The original COASTGUARD README follows below this section.
+
+## Changes made for New Zealand
+
+| Change | Where |
+| --- | --- |
+| **Georeferencing fix.** Images are requested from Google Earth Engine on a fixed pixel grid aligned to the AOI in its UTM projection (removes an offset of tens of metres caused by meridian convergence away from the UTM central meridian). Continuous bands are resampled bilinearly and QA bands by nearest neighbour. | `Toolshed/Toolbox.py` (`AOIBoundsUTM`, `GridBlock`), `Toolshed/Image_Processing.py` (`GetGridPixels`) |
+| **Local (edge-focused) threshold.** After a first-pass Weighted Peaks edge, a strip around the edge is used to recompute the NDVI threshold by minimising the combined misclassification of the two classes, iterated until stable. | `Toolshed/VegetationLine.py` (`FindShoreContours_Local`), `Toolshed/Toolbox.py` (`LocalStrip`, `FindLocalThresh`) |
+| **New Zealand classifiers.** MLP vegetation classifiers retrained on Landsat 8 and Sentinel-2 scenes from Te Henga, Te Ārai, Kāwhia and North New Brighton: `NZ` (no sparse vegetation) and `NZsparse` (sparse vegetation included). | `Classification/models/MLPClassifier_Veg_L8S2_NZ*.pkl` (+ `.json` metadata), `Classification/train_new_classifier_veg_NZ.ipynb`, `Classification/training_data/*_train/` |
+
+The default VedgeSat classifier (`MLPClassifier_Veg_L5L8S2.pkl`) is unchanged and was used for comparison.
+
+## Analysis files
+
+| File / folder | Contents |
+| --- | --- |
+| `VedgeSat_Driver_NZ.ipynb` | Driver notebook for running VedgeSat with the NZ changes |
+| `VedgeSat_Driver_NZ_testing.ipynb` | Validation batch runs (3 classifiers × 2 thresholds at Muriwai and Pakiri), NZCCD comparison, Weighted Peaks stability tests |
+| `image_lists.py` | Fixed Earth Engine image IDs used in every validation run |
+| `Pooled_accuracy.ipynb`, `Muriwai_seasonal.ipynb`, `Site_figures.ipynb`, `Site_Maps.ipynb` | Results tables and figures |
+| `Data/BatchS_*.csv` | Batch run log, consistency checks and Weighted Peaks random-draw stability results |
+| `Data/NZCCD_comparison_batch/` | Edge accuracy against NZCCD (per transect, per image, per line, per site, by season) and violin plots |
+| `Data/Extra_analyses/` | Classifier accuracy (leave-one-site-out), pooled metrics, threshold analyses, Pakiri sparse-vegetation zone, Muriwai seasonal analysis, site figures |
+| `Data/referenceLines/` | Reference lines digitised for this study from LINZ aerial imagery (Muriwai, Pakiri main foredune, Pakiri sparse zone) |
+
+## Data not included
+
+- **NZCCD validation lines** (Tuck et al., 2024) are licensed CC BY-NC-ND 4.0 and are not redistributed here. Download them from https://doi.org/10.17608/k6.auckland.27105955.v1. Lines used: Muriwai 2017-07-15, 2020-01-25, 2022-01-17; Pakiri 2017-02-03, 2021-10-14, 2023-04-04. Transect files cast from these lines are also omitted.
+- **Satellite imagery and the pixel cache** are not included because of size; they are re-downloaded from Google Earth Engine using the image IDs in `image_lists.py`.
+
+## Running
+
+Set up the environment with `coastguard_env.yml` as described in the original README below. Earth Engine calls use `ee.Initialize(project=...)`; replace the project ID with your own Google Cloud project. Notebook paths point to the author's machine and need editing to your local paths.
+
+## References
+
+- Muir, F. M. E., Hurst, M. D., Richardson-Foulger, L., Rennie, A. F., & Naylor, L. A. (2024). VedgeSat: An automated, open-source toolkit for coastal change monitoring using satellite-derived vegetation edges. *Earth Surface Processes and Landforms*, 49(8), 2405–2423. https://doi.org/10.1002/esp.5835
+- Tuck, M., Dickson, M., Ryan, E., Ford, M., & Konlechner, T. (2024). A national scale coastal change dataset for Aotearoa New Zealand. *Data in Brief*, 57, 111104. https://doi.org/10.1016/j.dib.2024.111104 (data: https://doi.org/10.17608/k6.auckland.27105955.v1)
+
+---
+
 ![COASTGUARD_logo](https://github.com/user-attachments/assets/5d9d52b6-b40b-497d-952b-646e88531de6)
 
 `C`oastal `O`bservation + `A`nalysis with `S`atellite-derived `T`imeseries, 

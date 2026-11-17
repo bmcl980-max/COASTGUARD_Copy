@@ -1548,14 +1548,51 @@ def GetImageEPSG(inputs, metadata):
     return image_epsg
 
 
+def AOIBoundsUTM(settings):
+    """
+    Bounding box of the AOI polygon in the run's projection (settings['projection_epsg']).
+    BM Oct 2026
+
+    Parameters
+    ----------
+    settings : dict
+        Dictionary of user-defined settings used for the veg edge/waterline extraction.
+
+    Returns
+    -------
+    xmin, ymin, xmax, ymax : float
+        Bounding box of the AOI in metres.
+
+    """
+    inProj = Proj(init='EPSG:'+str(settings['ref_epsg']))
+    outProj = Proj(init='EPSG:'+str(settings['projection_epsg']))
+    xs, ys = zip(*[Transf(inProj, outProj, x, y) for x, y in settings['inputs']['polygon'][0]])
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def GridBlock(pixel_size):
+    """
+    Coarsest band resolution fetched for a platform, which the pixel grid's origin
+    and extent are aligned to so that every band covers exactly the same area
+    (Sentinel-2: 60 m QA band; Landsat: 30 m multispectral bands).
+    BM Oct 2026
+    """
+    return 60 if abs(pixel_size) == 10 else 30
+
+
 def CalcGeoref(raw_georef, settings):
     """
-    Generate a georeferencing list for affine transformations, using the 
-    bounding box at the start of a run. The layout is fed in from the first image
-    in an ImageCollection, and then transformation happens on the X and Y limit
-    to get coordinates in the desired projection before rearranging.
-        
+    Generate the georeferencing list for the run's fixed pixel grid. Every image
+    is requested on this grid (Image_Processing.GetGridPixels), in the run's
+    projection (settings['projection_epsg']), whatever its tile or UTM zone, so
+    one georef is exact for every image of the platform.
+    
     FM Nov 2024
+    Corrected BM Oct 2026: the previous version used the AOI's projected north-west
+    corner as the image origin, but GEE returned the pixels covering the AOI's
+    bounding box in each image's own projection. The lat/lon AOI is rotated in UTM
+    (meridian convergence), so images were misplaced by tens of metres in NZ, and
+    images from another UTM zone were not georeferenced correctly at all.
     
     Parameters
     ----------
@@ -1567,21 +1604,26 @@ def CalcGeoref(raw_georef, settings):
 
     Returns
     -------
-    georef : TYPE
-        Transformed georef coordinates and scales in the order
+    georef : list
+        Grid origin and scales in the order
         [Xtrans, Xscale, Xshear, Ytrans, Yshear, Yscale].
 
     """
     
-    # Define x and y as the top left corner of the AOI bounding box
-    x, y = settings['inputs']['polygon'][0][3]
-    # Set input and output projection systems
-    inProj = Proj(init='EPSG:'+str(settings['ref_epsg']))
-    outProj = Proj(init='EPSG:'+str(settings['projection_epsg']))
-    # Transform x and y to new projection
-    im_x, im_y = Transf(inProj, outProj, x, y)
-    # Set georef values in new order
-    georef = [round(im_x),raw_georef[0],raw_georef[1],round(im_y),raw_georef[3],raw_georef[4]] # rearrange
+    xscale, xshear, gridx, yshear, yscale, gridy = raw_georef
+    block = GridBlock(xscale)
+    if abs(xscale) == 10:
+        # Sentinel-2: all MGRS tiles in a UTM zone sit on one 60 m-aligned grid
+        gridx, gridy = 0.0, 0.0
+    elif gridy < 0 and str(settings['projection_epsg']).startswith('327'):
+        # Landsat in GEE uses northern-hemisphere UTM (EPSG:326xx) with negative
+        # northings; move its grid origin to the southern-hemisphere equivalent
+        gridy += 10000000
+    xmin, ymin, xmax, ymax = AOIBoundsUTM(settings)
+    # Top-left corner covering the AOI, aligned to the image grid
+    im_x = gridx + np.floor((xmin - gridx) / block) * block
+    im_y = gridy + np.ceil((ymax - gridy) / block) * block
+    georef = [float(im_x), xscale, xshear, float(im_y), yshear, yscale]
     
     return georef
 
@@ -2160,6 +2202,95 @@ def FindWPThresh(int_veg, int_nonveg):
     
     return t_ndi, peaks
 
+
+
+def LocalStrip(contours, im_shape, pixel_size, strip_m, min_length_m):
+    """
+    Build a strip of pixels within strip_m metres either side of a first-pass
+    vegetation edge, for recomputing the threshold locally (FindLocalThresh).
+    Contours shorter than min_length_m (e.g. loops around surf or isolated
+    patches) are ignored, as in ProcessShoreline.
+    BM Oct 2026
+
+    Parameters
+    ----------
+    contours : list of np.array
+        First-pass contours in pixel coordinates (row, col), from find_contours.
+    im_shape : tuple
+        (rows, cols) of the image.
+    pixel_size : float
+        Pixel size in metres.
+    strip_m : float
+        Half-width of the strip in metres.
+    min_length_m : float
+        Minimum contour length (m) used to define the strip.
+
+    Returns
+    -------
+    strip : np.array or None
+        Boolean 2D array, True inside the strip; None if no contour is long enough.
+
+    """
+    from scipy import ndimage
+    line = np.zeros(im_shape, dtype=bool)
+    for c in contours:
+        if len(c) < 2:
+            continue
+        length_m = np.sum(np.linalg.norm(np.diff(c, axis=0), axis=1)) * pixel_size
+        if length_m < min_length_m:
+            continue
+        # densify so the rasterised line has no gaps (points at most half a pixel apart)
+        seg = np.linalg.norm(np.diff(c, axis=0), axis=1)
+        n = np.maximum(np.ceil(seg * 2).astype(int), 1)
+        pts = np.vstack([np.linspace(c[i], c[i+1], n[i], endpoint=False) for i in range(len(c)-1)] + [c[-1:]])
+        r = np.clip(np.round(pts[:, 0]).astype(int), 0, im_shape[0]-1)
+        q = np.clip(np.round(pts[:, 1]).astype(int), 0, im_shape[1]-1)
+        line[r, q] = True
+    if not line.any():
+        return None
+    dist_m = ndimage.distance_transform_edt(~line) * pixel_size
+    return dist_m <= strip_m
+
+
+def FindLocalThresh(int_veg, int_nonveg, t_ref=None, step=0.005):
+    """
+    Minimum-error threshold between the vegetation and non-vegetation NDVI values
+    inside the local strip: the value that misclassifies the smallest share of
+    each class (classes weighted equally), i.e. where the two class distributions
+    cross. Where several values tie (e.g. the classes are separated by a gap, so the
+    labels give no information on where in the gap the edge lies), the tied value
+    closest to t_ref (the previous threshold) is used.
+    BM Oct 2026
+
+    Parameters
+    ----------
+    int_veg : array
+        NDVI values of pixels classed as vegetation in the strip.
+    int_nonveg : array
+        NDVI values of pixels classed as non-vegetation in the strip.
+    t_ref : float, optional
+        Previous threshold, used to break ties.
+    step : float
+        Spacing of candidate thresholds.
+
+    Returns
+    -------
+    t_ndi : float or None
+        Threshold, or None if either class has fewer than 20 pixels.
+
+    """
+    int_veg = np.sort(int_veg[np.isfinite(int_veg)])
+    int_nonveg = np.sort(int_nonveg[np.isfinite(int_nonveg)])
+    if len(int_veg) < 20 or len(int_nonveg) < 20:
+        return None
+    cand = np.arange(-1, 1 + step, step)
+    # share of vegetation below t (called non-veg) + share of non-veg at or above t (called veg)
+    err = (np.searchsorted(int_veg, cand, side='left') / len(int_veg)
+           + (len(int_nonveg) - np.searchsorted(int_nonveg, cand, side='left')) / len(int_nonveg))
+    tied = cand[np.isclose(err, err.min())]
+    if t_ref is None:
+        return float(tied.mean())
+    return float(tied[np.argmin(np.abs(tied - t_ref))])
 
 
 def TZValuesSTDV(int_veg, int_nonveg):

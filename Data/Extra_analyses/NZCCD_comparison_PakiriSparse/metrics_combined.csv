@@ -1,0 +1,5 @@
+site,satname,run,images,n,median_bias_m,MedAE_m,MAE_m,RMSE_m,p90_abs_m,within_10m_%,coverage_%
+Both,L8,NZsparse (WP),1,65,-0.6,5.8,16.3,25.8,54.6,60.0,100.0
+Both,L8,NZsparse (local),1,65,-21.0,26.4,32.2,42.6,66.8,33.8,100.0
+Both,S2,NZsparse (WP),1,65,5.6,14.0,27.1,36.1,72.7,24.6,100.0
+Both,S2,NZsparse (local),1,43,-2.9,6.4,24.7,42.1,84.2,62.8,66.2

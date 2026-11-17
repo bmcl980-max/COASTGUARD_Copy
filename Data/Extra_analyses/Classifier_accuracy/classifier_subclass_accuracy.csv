@@ -1,0 +1,37 @@
+model,subclass,platform,pixels,correct
+VedgeSat (default),built_cloud,L8,471,1.0
+VedgeSat (default),built_cloud,S2,346,0.9942
+VedgeSat (default),dune_veg,L8,2118,0.8074
+VedgeSat (default),dune_veg,S2,2400,0.9504
+VedgeSat (default),other_veg,L8,1408,0.8977
+VedgeSat (default),other_veg,S2,1600,0.8906
+VedgeSat (default),sand_dry,L8,2430,1.0
+VedgeSat (default),sand_dry,S2,2904,1.0
+VedgeSat (default),sand_wet,L8,766,1.0
+VedgeSat (default),sand_wet,S2,1000,1.0
+VedgeSat (default),water,L8,750,1.0
+VedgeSat (default),water,S2,750,1.0
+NZ,built_cloud,L8,471,0.9979
+NZ,built_cloud,S2,346,0.9046
+NZ,dune_veg,L8,2118,0.9877
+NZ,dune_veg,S2,2400,0.9942
+NZ,other_veg,L8,1408,1.0
+NZ,other_veg,S2,1600,0.9981
+NZ,sand_dry,L8,2430,0.9737
+NZ,sand_dry,S2,2904,0.9993
+NZ,sand_wet,L8,766,0.9791
+NZ,sand_wet,S2,1000,0.999
+NZ,water,L8,750,1.0
+NZ,water,S2,750,1.0
+NZsparse,built_cloud,L8,471,0.8238
+NZsparse,built_cloud,S2,346,0.6647
+NZsparse,dune_veg,L8,2118,0.9976
+NZsparse,dune_veg,S2,2400,0.9975
+NZsparse,other_veg,L8,1408,1.0
+NZsparse,other_veg,S2,1600,0.9994
+NZsparse,sand_dry,L8,2430,0.8354
+NZsparse,sand_dry,S2,2904,0.8767
+NZsparse,sand_wet,L8,766,0.9125
+NZsparse,sand_wet,S2,1000,0.958
+NZsparse,water,L8,750,0.9987
+NZsparse,water,S2,750,1.0
